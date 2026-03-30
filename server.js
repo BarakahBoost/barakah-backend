@@ -1,21 +1,21 @@
-Aconst express  = require("express");
+const express  = require("express");
 const cors     = require("cors");
 const fs       = require("fs");
 const path     = require("path");
 const fetch    = (...args) => import("node-fetch").then(({ default: f }) => f(...args));
 const cron     = require("node-cron");
-
+ 
 const app  = express();
 const PORT = process.env.PORT || 3001;
-
+ 
 app.use(cors({ origin: "*", methods: ["GET","POST","PUT","DELETE","OPTIONS"], allowedHeaders: ["Content-Type"] }));
 app.use(express.json({ limit: "10mb" }));
-
+ 
 // ─── OPSLAG ──────────────────────────────────────────────────
 const DATA_DIR  = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "portal.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-
+ 
 function loadData() {
   try {
     if (fs.existsSync(DATA_FILE)) return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
@@ -26,18 +26,18 @@ function loadData() {
     bookings: []
   };
 }
-
+ 
 function saveData(d) {
   try { fs.writeFileSync(DATA_FILE, JSON.stringify(d, null, 2)); }
   catch(e) { console.error("Save error:", e.message); }
 }
-
+ 
 let db = loadData();
-
+ 
 // ─── TIKTOK ──────────────────────────────────────────────────
 const RAPIDAPI_KEY  = process.env.RAPIDAPI_KEY || "";
 const RAPIDAPI_HOST = "free-tiktok-api-scraper-mobile-version.p.rapidapi.com";
-
+ 
 async function tiktokGet(path) {
   const res = await fetch(`https://${RAPIDAPI_HOST}${path}`, {
     headers: { "x-rapidapi-key": RAPIDAPI_KEY, "x-rapidapi-host": RAPIDAPI_HOST }
@@ -45,7 +45,7 @@ async function tiktokGet(path) {
   if (!res.ok) throw new Error(`TikTok API ${res.status}`);
   return res.json();
 }
-
+ 
 async function fetchProfile(username) {
   const clean = username.replace(/^@/, "").split("?")[0].split("/")[0];
   let data;
@@ -71,7 +71,7 @@ async function fetchProfile(username) {
     videoCount:  s?.videoCount || 0,
   };
 }
-
+ 
 async function fetchVideos(username) {
   const clean = username.replace(/^@/, "").split("?")[0].split("/")[0];
   let data;
@@ -101,7 +101,7 @@ async function fetchVideos(username) {
     };
   });
 }
-
+ 
 async function syncClient(clientId) {
   const client = db.clients.find(c => c.id === clientId);
   if (!client?.tiktokProfile) throw new Error("Geen TikTok profiel ingesteld");
@@ -126,23 +126,23 @@ async function syncClient(clientId) {
   console.log(`✅ ${clientId}: ${videos.length} videos, ${profile.followers} volgers`);
   return { profile, videos };
 }
-
+ 
 // ═══════════════════════════════════════════════════════════
 // ROUTES — Data sync tussen alle apparaten
 // ═══════════════════════════════════════════════════════════
-
+ 
 // Health
 app.get("/", (req, res) => res.json({
   status: "ok", service: "BarakahPortal",
   clients: db.clients.length,
   apiKey: RAPIDAPI_KEY ? "✅ ingesteld" : "❌ niet ingesteld"
 }));
-
+ 
 // Volledige data ophalen (app laadt dit bij opstarten)
 app.get("/portal-data", (req, res) => {
   res.json({ success: true, data: db });
 });
-
+ 
 // Volledige data opslaan (app pusht wijzigingen)
 app.post("/portal-data", (req, res) => {
   try {
@@ -171,7 +171,7 @@ app.post("/portal-data", (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
-
+ 
 // TikTok sync
 app.post("/sync/:clientId", async (req, res) => {
   // Update client tiktokProfile from request if provided
@@ -190,7 +190,7 @@ app.post("/sync/:clientId", async (req, res) => {
     res.status(502).json({ success: false, error: e.message });
   }
 });
-
+ 
 // Dagelijkse auto-sync
 cron.schedule("0 6 * * *", async () => {
   console.log("⏰ Auto-sync...");
@@ -199,5 +199,6 @@ cron.schedule("0 6 * * *", async () => {
     await new Promise(r => setTimeout(r, 4000));
   }
 }, { timezone: "Europe/Amsterdam" });
-
+ 
 app.listen(PORT, () => console.log(`🌿 BarakahPortal op poort ${PORT}`));
+ 
