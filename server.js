@@ -34,26 +34,45 @@ async function tiktokGet(path) {
 }
 
 async function fetchProfile(username) {
-  const clean = username.replace(/^@/, "").split("?")[0];
-  const data  = await tiktokGet(`/user/info?username=${encodeURIComponent(clean)}`);
-  const u     = data?.userInfo?.user || data?.user || {};
-  const s     = data?.userInfo?.stats || data?.stats || {};
+  const clean = username.replace(/^@/, "").split("?")[0].split("/")[0];
+  // Try multiple endpoints
+  let data;
+  try {
+    data = await tiktokGet(`/getUserInfo?username=${encodeURIComponent(clean)}`);
+  } catch(e) {
+    try {
+      data = await tiktokGet(`/user/info?username=${encodeURIComponent(clean)}`);
+    } catch(e2) {
+      data = await tiktokGet(`/getUserInfoByUniqueId?uniqueId=${encodeURIComponent(clean)}`);
+    }
+  }
+  const u = data?.userInfo?.user || data?.user || data?.data?.user || data || {};
+  const s = data?.userInfo?.stats || data?.stats || data?.data?.stats || {};
   return {
     username:    clean,
-    displayName: u?.nickname || clean,
-    avatar:      u?.avatarMedium || u?.avatarThumb || null,
+    displayName: u?.nickname || u?.name || clean,
+    avatar:      u?.avatarMedium || u?.avatarThumb || u?.avatar || null,
     verified:    u?.verified || false,
-    followers:   s?.followerCount || 0,
-    following:   s?.followingCount || 0,
-    totalLikes:  s?.heartCount || s?.heart || 0,
-    videoCount:  s?.videoCount || 0,
+    followers:   s?.followerCount || s?.fans || 0,
+    following:   s?.followingCount || s?.following || 0,
+    totalLikes:  s?.heartCount || s?.heart || s?.digg || 0,
+    videoCount:  s?.videoCount || s?.video || 0,
   };
 }
 
 async function fetchVideos(username) {
-  const clean = username.replace(/^@/, "").split("?")[0];
-  const data  = await tiktokGet(`/user/posts?username=${encodeURIComponent(clean)}&count=30`);
-  const items = data?.items || data?.aweme_list || data?.data?.items || [];
+  const clean = username.replace(/^@/, "").split("?")[0].split("/")[0];
+  let data;
+  try {
+    data = await tiktokGet(`/getUserVideos?username=${encodeURIComponent(clean)}&count=30`);
+  } catch(e) {
+    try {
+      data = await tiktokGet(`/user/posts?username=${encodeURIComponent(clean)}&count=30`);
+    } catch(e2) {
+      data = await tiktokGet(`/getVideosByUniqueId?uniqueId=${encodeURIComponent(clean)}&count=30`);
+    }
+  }
+  const items = data?.items || data?.aweme_list || data?.data?.items || data?.videoList || [];
   return items.map(item => {
     const st = item?.stats || item?.statistics || {};
     return {
