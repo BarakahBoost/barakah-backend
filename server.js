@@ -54,7 +54,7 @@ async function fetchProfile(username) {
       );
       if (res.ok) {
         const d = await res.json();
-        console.log(`✅ Profile via ScrapeCreators`);
+        console.log(`✅ Profile via ScrapeCreators FULL:`, JSON.stringify(d));
         // ScrapeCreators returns: { success, credits_remaining, user: { id, uniqueId, nickname, stats: { followers, ... } } }
         const u = d?.user || d?.data?.user || d;
         const stats = u?.stats || u?.userStats || {};
