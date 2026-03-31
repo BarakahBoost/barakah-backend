@@ -56,18 +56,12 @@ async function fetchProfile(username) {
         const d = await res.json();
         const u = d?.user || d;
         // Try stats first, then statsV2
-        const st  = u?.stats || {};
-        const st2 = u?.statsV2 || {};
+        const st  = d?.stats || {};
+        const st2 = d?.statsV2 || {};
         const followers  = parseInt(st?.followerCount  || st2?.followerCount)  || 0;
         const following  = parseInt(st?.followingCount || st2?.followingCount) || 0;
         const likes      = parseInt(st?.heartCount     || st2?.heartCount || st?.heart || st2?.heart) || 0;
         const videoCount = parseInt(st?.videoCount     || st2?.videoCount) || 0;
-        console.log(`RAW root keys:`, Object.keys(d || {}));
-        console.log(`RAW d.stats:`, JSON.stringify(d?.stats));
-        console.log(`RAW d.statsV2:`, JSON.stringify(d?.statsV2));
-        console.log(`RAW user keys:`, Object.keys(u || {}));
-        console.log(`RAW stats:`, JSON.stringify(u?.stats));
-        console.log(`RAW statsV2:`, JSON.stringify(u?.statsV2));
         console.log(`✅ ${u?.nickname}: ${followers} volgers, ${videoCount} videos`);
         return {
           username:    clean,
@@ -123,18 +117,26 @@ async function fetchVideos(username) {
       if (res.ok) {
         const d = await res.json();
         const items = d?.posts || d?.videos || d?.data || [];
-        console.log(`✅ ${items.length} videos via ScrapeCreators:`, items[0] ? JSON.stringify(items[0]).slice(0,200) : "no items");
-        return items.map(v => ({
-          id:       v?.id || v?.videoId || v?.video_id || String(Date.now()),
-          url:      v?.url || v?.videoUrl || v?.video_url || `https://www.tiktok.com/@${clean}/video/${v?.id || v?.videoId}`,
-          title:    v?.description || v?.desc || v?.title || v?.text || "",
-          thumb:    v?.coverUrl || v?.thumbnail || v?.cover || v?.cover_url || null,
-          views:    v?.views || v?.playCount || v?.viewCount || v?.play_count || v?.view_count || 0,
-          likes:    v?.likes || v?.diggCount || v?.likeCount || v?.digg_count || v?.like_count || 0,
-          comments: v?.comments || v?.commentCount || v?.comment_count || 0,
-          shares:   v?.shares || v?.shareCount || v?.share_count || 0,
-          date:     v?.createTime || v?.create_time ? new Date((v.createTime || v.create_time) * 1000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-        }));
+        console.log(`✅ ${items.length} videos via ScrapeCreators`);
+        return items.map(v => {
+          // ScrapeCreators video fields (try all known variants)
+          const views    = v?.views    || v?.playCount    || v?.play_count    || v?.viewCount    || v?.view_count    || 0;
+          const likes    = v?.likes    || v?.diggCount    || v?.digg_count    || v?.likeCount    || v?.like_count    || 0;
+          const comments = v?.comments || v?.commentCount || v?.comment_count || v?.commentsCount|| 0;
+          const shares   = v?.shares   || v?.shareCount   || v?.share_count   || v?.sharesCount  || 0;
+          const ct       = v?.createTime || v?.create_time || v?.createdAt || 0;
+          return {
+            id:       String(v?.id || v?.videoId || v?.video_id || Date.now()),
+            url:      v?.url || v?.videoUrl || v?.video_url || `https://www.tiktok.com/@${clean}/video/${v?.id || v?.videoId}`,
+            title:    v?.description || v?.desc || v?.title || v?.text || v?.caption || "",
+            thumb:    v?.coverUrl || v?.thumbnail || v?.cover || v?.cover_url || v?.thumbnailUrl || null,
+            views:    parseInt(views) || 0,
+            likes:    parseInt(likes) || 0,
+            comments: parseInt(comments) || 0,
+            shares:   parseInt(shares) || 0,
+            date:     ct ? new Date(ct * 1000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+          };
+        });
       }
     } catch(e) { console.log(`ScrapeCreators videos failed:`, e.message); }
   }
