@@ -111,12 +111,13 @@ async function fetchVideos(username) {
   if (SCRAPECREATORS_KEY) {
     try {
       const res = await fetch(
-        `https://api.scrapecreators.com/v1/tiktok/user/posts?handle=${encodeURIComponent(clean)}&limit=30`,
+        `https://api.scrapecreators.com/v3/tiktok/profile/videos?handle=${encodeURIComponent(clean)}`,
         { headers: { "x-api-key": SCRAPECREATORS_KEY } }
       );
       if (res.ok) {
         const d = await res.json();
-        const items = d?.posts || d?.videos || d?.data || [];
+        console.log(`ScrapeCreators videos root keys:`, Object.keys(d||{}));
+        const items = d?.videos || d?.posts || d?.data || d?.items || [];
         console.log(`✅ ${items.length} videos via ScrapeCreators`);
         return items.map(v => {
           // ScrapeCreators video fields (try all known variants)
