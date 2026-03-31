@@ -54,16 +54,18 @@ async function fetchProfile(username) {
       );
       if (res.ok) {
         const d = await res.json();
-        console.log(`✅ Profile via ScrapeCreators`);
+        console.log(`✅ Profile via ScrapeCreators:`, JSON.stringify(d).slice(0,200));
+        // ScrapeCreators can return data nested or flat
+        const pd = d?.data || d?.user || d?.profile || d;
         return {
           username:    clean,
-          displayName: d?.nickname || d?.name || clean,
-          avatar:      d?.avatarUrl || d?.avatar || null,
-          verified:    d?.verified || false,
-          followers:   d?.followers || d?.followerCount || 0,
-          following:   d?.following || d?.followingCount || 0,
-          totalLikes:  d?.likes || d?.heartCount || 0,
-          videoCount:  d?.videos || d?.videoCount || 0,
+          displayName: pd?.nickname || pd?.uniqueId || pd?.name || pd?.username || clean,
+          avatar:      pd?.avatarUrl || pd?.avatarMedium || pd?.avatarThumb || pd?.avatar || null,
+          verified:    pd?.verified || false,
+          followers:   pd?.followers || pd?.followerCount || pd?.fans || pd?.follower_count || 0,
+          following:   pd?.following || pd?.followingCount || pd?.follow_count || 0,
+          totalLikes:  pd?.likes || pd?.heartCount || pd?.heart || pd?.digg_count || 0,
+          videoCount:  pd?.videos || pd?.videoCount || pd?.video_count || 0,
         };
       }
     } catch(e) { console.log(`ScrapeCreators profile failed:`, e.message); }
@@ -112,17 +114,17 @@ async function fetchVideos(username) {
       if (res.ok) {
         const d = await res.json();
         const items = d?.posts || d?.videos || d?.data || [];
-        console.log(`✅ ${items.length} videos via ScrapeCreators`);
+        console.log(`✅ ${items.length} videos via ScrapeCreators:`, items[0] ? JSON.stringify(items[0]).slice(0,200) : "no items");
         return items.map(v => ({
-          id:       v?.id || v?.videoId || String(Date.now()),
-          url:      v?.url || v?.videoUrl || `https://www.tiktok.com/@${clean}/video/${v?.id}`,
-          title:    v?.description || v?.desc || v?.title || "",
-          thumb:    v?.coverUrl || v?.thumbnail || v?.cover || null,
-          views:    v?.views || v?.playCount || v?.viewCount || 0,
-          likes:    v?.likes || v?.diggCount || v?.likeCount || 0,
-          comments: v?.comments || v?.commentCount || 0,
-          shares:   v?.shares || v?.shareCount || 0,
-          date:     v?.createTime ? new Date(v.createTime * 1000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+          id:       v?.id || v?.videoId || v?.video_id || String(Date.now()),
+          url:      v?.url || v?.videoUrl || v?.video_url || `https://www.tiktok.com/@${clean}/video/${v?.id || v?.videoId}`,
+          title:    v?.description || v?.desc || v?.title || v?.text || "",
+          thumb:    v?.coverUrl || v?.thumbnail || v?.cover || v?.cover_url || null,
+          views:    v?.views || v?.playCount || v?.viewCount || v?.play_count || v?.view_count || 0,
+          likes:    v?.likes || v?.diggCount || v?.likeCount || v?.digg_count || v?.like_count || 0,
+          comments: v?.comments || v?.commentCount || v?.comment_count || 0,
+          shares:   v?.shares || v?.shareCount || v?.share_count || 0,
+          date:     v?.createTime || v?.create_time ? new Date((v.createTime || v.create_time) * 1000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
         }));
       }
     } catch(e) { console.log(`ScrapeCreators videos failed:`, e.message); }
