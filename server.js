@@ -119,6 +119,9 @@ async function fetchVideos(username) {
         console.log(`ScrapeCreators videos root keys:`, Object.keys(d||{}));
         const items = d?.aweme_list || d?.videos || d?.posts || d?.data || d?.items || [];
         console.log(`✅ ${items.length} videos via ScrapeCreators`);
+        if(items[0]) console.log(`VIDEO ITEM KEYS:`, JSON.stringify(Object.keys(items[0])));
+        if(items[0]?.statistics) console.log(`VIDEO STATS:`, JSON.stringify(items[0].statistics));
+        if(items[0]?.stats) console.log(`VIDEO STATS2:`, JSON.stringify(items[0].stats));
         return items.map(v => {
           // ScrapeCreators video fields (try all known variants)
           const views    = v?.views    || v?.playCount    || v?.play_count    || v?.viewCount    || v?.view_count    || 0;
