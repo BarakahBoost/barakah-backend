@@ -54,19 +54,19 @@ async function fetchProfile(username) {
       );
       if (res.ok) {
         const d = await res.json();
-        console.log(`✅ Profile via ScrapeCreators FULL:`, JSON.stringify(d));
-        // ScrapeCreators returns: { success, credits_remaining, user: { id, uniqueId, nickname, stats: { followers, ... } } }
-        const u = d?.user || d?.data?.user || d;
-        const stats = u?.stats || u?.userStats || {};
+        // ScrapeCreators: { success, credits_remaining, user: { nickname, avatarLarger, stats: { followerCount, followingCount, heartCount, videoCount } } }
+        const u = d?.user || d;
+        const stats = u?.stats || u?.statsV2 || {};
+        console.log(`✅ Profile: ${u?.nickname}, followers: ${stats?.followerCount}`);
         return {
           username:    clean,
           displayName: u?.nickname || u?.uniqueId || clean,
           avatar:      u?.avatarLarger || u?.avatarMedium || u?.avatarThumb || null,
           verified:    u?.verified || false,
-          followers:   stats?.followerCount || u?.followerCount || u?.followers || 0,
-          following:   stats?.followingCount || u?.followingCount || u?.following || 0,
-          totalLikes:  stats?.heartCount || stats?.heart || u?.heartCount || u?.likes || 0,
-          videoCount:  stats?.videoCount || u?.videoCount || u?.videos || 0,
+          followers:   parseInt(stats?.followerCount) || 0,
+          following:   parseInt(stats?.followingCount) || 0,
+          totalLikes:  parseInt(stats?.heartCount || stats?.heart) || 0,
+          videoCount:  parseInt(stats?.videoCount) || 0,
         };
       }
     } catch(e) { console.log(`ScrapeCreators profile failed:`, e.message); }
