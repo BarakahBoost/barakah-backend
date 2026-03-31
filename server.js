@@ -54,18 +54,19 @@ async function fetchProfile(username) {
       );
       if (res.ok) {
         const d = await res.json();
-        console.log(`✅ Profile via ScrapeCreators:`, JSON.stringify(d).slice(0,200));
-        // ScrapeCreators can return data nested or flat
-        const pd = d?.data || d?.user || d?.profile || d;
+        console.log(`✅ Profile via ScrapeCreators`);
+        // ScrapeCreators returns: { success, credits_remaining, user: { id, uniqueId, nickname, stats: { followers, ... } } }
+        const u = d?.user || d?.data?.user || d;
+        const stats = u?.stats || u?.userStats || {};
         return {
           username:    clean,
-          displayName: pd?.nickname || pd?.uniqueId || pd?.name || pd?.username || clean,
-          avatar:      pd?.avatarUrl || pd?.avatarMedium || pd?.avatarThumb || pd?.avatar || null,
-          verified:    pd?.verified || false,
-          followers:   pd?.followers || pd?.followerCount || pd?.fans || pd?.follower_count || 0,
-          following:   pd?.following || pd?.followingCount || pd?.follow_count || 0,
-          totalLikes:  pd?.likes || pd?.heartCount || pd?.heart || pd?.digg_count || 0,
-          videoCount:  pd?.videos || pd?.videoCount || pd?.video_count || 0,
+          displayName: u?.nickname || u?.uniqueId || clean,
+          avatar:      u?.avatarLarger || u?.avatarMedium || u?.avatarThumb || null,
+          verified:    u?.verified || false,
+          followers:   stats?.followerCount || u?.followerCount || u?.followers || 0,
+          following:   stats?.followingCount || u?.followingCount || u?.following || 0,
+          totalLikes:  stats?.heartCount || stats?.heart || u?.heartCount || u?.likes || 0,
+          videoCount:  stats?.videoCount || u?.videoCount || u?.videos || 0,
         };
       }
     } catch(e) { console.log(`ScrapeCreators profile failed:`, e.message); }
