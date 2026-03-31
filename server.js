@@ -62,6 +62,9 @@ async function fetchProfile(username) {
         const following  = parseInt(st?.followingCount || st2?.followingCount) || 0;
         const likes      = parseInt(st?.heartCount     || st2?.heartCount || st?.heart || st2?.heart) || 0;
         const videoCount = parseInt(st?.videoCount     || st2?.videoCount) || 0;
+        console.log(`RAW root keys:`, Object.keys(d || {}));
+        console.log(`RAW d.stats:`, JSON.stringify(d?.stats));
+        console.log(`RAW d.statsV2:`, JSON.stringify(d?.statsV2));
         console.log(`RAW user keys:`, Object.keys(u || {}));
         console.log(`RAW stats:`, JSON.stringify(u?.stats));
         console.log(`RAW statsV2:`, JSON.stringify(u?.statsV2));
