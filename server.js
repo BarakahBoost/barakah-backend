@@ -119,16 +119,16 @@ async function fetchVideos(username) {
         console.log(`ScrapeCreators videos root keys:`, Object.keys(d||{}));
         const items = d?.aweme_list || d?.videos || d?.posts || d?.data || d?.items || [];
         console.log(`✅ ${items.length} videos via ScrapeCreators`);
-        if(items[0]) console.log(`VIDEO ITEM KEYS:`, JSON.stringify(Object.keys(items[0])));
-        if(items[0]?.statistics) console.log(`VIDEO STATS:`, JSON.stringify(items[0].statistics));
-        if(items[0]?.stats) console.log(`VIDEO STATS2:`, JSON.stringify(items[0].stats));
+
         return items.map(v => {
           // ScrapeCreators video fields (try all known variants)
-          const views    = v?.views    || v?.playCount    || v?.play_count    || v?.viewCount    || v?.view_count    || 0;
-          const likes    = v?.likes    || v?.diggCount    || v?.digg_count    || v?.likeCount    || v?.like_count    || 0;
-          const comments = v?.comments || v?.commentCount || v?.comment_count || v?.commentsCount|| 0;
-          const shares   = v?.shares   || v?.shareCount   || v?.share_count   || v?.sharesCount  || 0;
-          const ct       = v?.createTime || v?.create_time || v?.createdAt || 0;
+          // Stats zitten in v.statistics met deze exacte veldnamen
+          const st       = v?.statistics || v?.stats || {};
+          const views    = parseInt(st?.play_count    || st?.playCount    || v?.play_count    || v?.views    || 0);
+          const likes    = parseInt(st?.digg_count    || st?.diggCount    || v?.digg_count    || v?.likes    || 0);
+          const comments = parseInt(st?.comment_count || st?.commentCount || v?.comment_count || v?.comments || 0);
+          const shares   = parseInt(st?.share_count   || st?.shareCount   || v?.share_count   || v?.shares   || 0);
+          const ct       = v?.create_time || v?.createTime || v?.createdAt || 0;
           return {
             id:       String(v?.id || v?.videoId || v?.video_id || Date.now()),
             url:      v?.url || v?.videoUrl || v?.video_url || `https://www.tiktok.com/@${clean}/video/${v?.id || v?.videoId}`,
