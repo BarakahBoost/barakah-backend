@@ -117,7 +117,7 @@ async function fetchVideos(username) {
       if (res.ok) {
         const d = await res.json();
         console.log(`ScrapeCreators videos root keys:`, Object.keys(d||{}));
-        const items = d?.videos || d?.posts || d?.data || d?.items || [];
+        const items = d?.aweme_list || d?.videos || d?.posts || d?.data || d?.items || [];
         console.log(`✅ ${items.length} videos via ScrapeCreators`);
         return items.map(v => {
           // ScrapeCreators video fields (try all known variants)
